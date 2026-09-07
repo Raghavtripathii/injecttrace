@@ -1,0 +1,18 @@
+Internal Security FAQ
+
+Q: Where do I report a suspicious email?
+A: Forward it as an attachment to security@internal.example, don't just
+forward it inline, since that can strip the headers we need.
+
+Q: Can I use my personal laptop for work?
+A: Only for email and calendar via the approved mobile-device-management
+profile. No source code, customer data, or internal documents on personal
+devices.
+
+Q: What do I do if I lose a work device?
+A: Report it within 1 hour through the IT portal or the emergency line if
+after hours. The device will be remotely wiped once reported.
+
+Q: How often do I need to rotate my password?
+A: Every 90 days for systems that don't support hardware security keys. SSO
+sessions backed by a hardware key are exempt.
