@@ -1,15 +1,52 @@
-# injecttrace
+# injecttrace (scanner)
 
-The scanner itself. Structured the same way vuln-scanner was: one check module
-per attack class, a shared harness that can point at any RAG/agent endpoint
-(not hardcoded to the target app in this repo), a pytest suite built against
-mocked model responses, a CLI, JSON/HTML report output, and a non-optional
-authorization gate before anything runs against a real target.
+The scanner itself. Points at any RAG/agent endpoint that exposes a
+`POST /chat` accepting `{"query": "..."}` and returning `{"answer": "...",
+"sources": [...]}` — not hardcoded to the target app in this repo, though
+that's what it's built and proven against first.
 
-Not built yet. Coming in Phase 2, starting with check module 1 only: indirect
-prompt injection via retrieved content. See `../docs/OWASP_LLM_MAPPING.md` for
-how each planned module maps to the OWASP LLM Top 10, and `../docs/DECISIONS.md`
-for the reasoning behind the target app it's designed to test.
+## What's here
 
-Each check module will get an explicit "what this does NOT catch" note here
-once it exists — no module claims coverage it doesn't actually have.
+- `scanner/harness.py` — thin HTTP client, the only thing that knows how to
+  talk to a target.
+- `scanner/checks/indirect_injection.py` — check module 1. Sends two probes
+  designed to retrieve the planted-injection documents, checks whether the
+  corresponding canary token shows up in the answer. Maps to OWASP LLM01.
+- `scanner/report.py` — writes both a JSON and an HTML report per run.
+- `scanner/cli.py` — command-line entrypoint with a non-optional
+  `--i-am-authorized` flag. The scanner refuses to run against anything
+  without it.
+- `tests/` — pytest suite against a mocked client, no real target needed to
+  run these.
+
+## Running it
+
+Against the local target app (make sure it's running first):
+
+```bash
+pip install -r requirements.txt
+python -m scanner.cli --target http://127.0.0.1:8000 --i-am-authorized
+```
+
+Reports land in `reports/` as timestamped JSON + HTML files.
+
+## Running the tests
+
+```bash
+pytest
+```
+
+## What check module 1 does NOT catch
+
+It only tests the two payloads planted in this specific target's seed
+documents — it is not a general injection fuzzer. A target with different
+seed documents needs a different probe list; the scanner does not yet
+generate probes dynamically from an unknown corpus. That's an explicit
+non-goal for this check module, not an oversight.
+
+## What's next
+
+Check modules 2-4 (tool-calling hijack, data exfiltration, jailbreak
+persistence) are extensions, not part of the MVP — see
+`../docs/OWASP_LLM_MAPPING.md`. Module 1 gets a real write-up, run against
+the deployed target, before any of those start.
