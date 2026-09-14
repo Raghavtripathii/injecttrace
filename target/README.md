@@ -18,14 +18,16 @@ to actually work, then deliberately probed.
 
 ## Honest note on the seed documents
 
-`seed-documents/` contains 5 documents. 3 are plain policy text. 2 —
-`expense-reimbursement.txt` and `remote-work-policy.txt` — have a prompt
-injection payload deliberately embedded mid-document, for the sole purpose of
-giving InjectTrace's check module 1 something real to detect. Each payload
+`seed-documents/` contains 7 documents. 3 are plain policy text. 4 —
+`expense-reimbursement.txt`, `remote-work-policy.txt`, `leave-of-absence-policy.txt`,
+and `it-equipment-policy.txt` — have a prompt injection payload deliberately
+embedded mid-document, across two different techniques, for the sole purpose
+of giving InjectTrace's check module 1 something real to detect. Each payload
 makes the model output a fixed canary token instead of answering, so a
 successful exploit is unambiguous to verify. The answer key is in
-`KNOWN_INJECTIONS.md`, which is gitignored and stays local until the writeup
-references it (not dumped in full, in line with responsible disclosure norms).
+`KNOWN_INJECTIONS.md`, which is gitignored and stays local (not dumped in
+full, in line with responsible disclosure norms). Full methodology and result
+are in `../docs/FINDINGS-SUMMARY.md`.
 
 This target is intentionally naive about the content it retrieves — it drops
 retrieved chunks straight into the prompt with no sanitization. That's not an
@@ -55,6 +57,7 @@ curl -X POST http://127.0.0.1:8000/chat \
 
 - No auth on the API — fine for a local/authorized test target, would not be
   fine for anything else.
-- No streaming response (ai-code-reviewer already proved that pattern; kept
-  this simple on purpose to keep the RAG/MCP pieces the focus).
-- Deployment to Render/Railway is the next step before Phase 2 starts.
+- No streaming response (kept this simple on purpose to keep the RAG/MCP
+  pieces the focus).
+- Not yet deployed anywhere public — tested locally so far. A live deployment
+  is the natural next step for a fully real-world test.
