@@ -27,13 +27,20 @@ vault-notes-vapt: build a real target, then build a real tool to break it.
 - **`scanner/`** — InjectTrace itself: the check modules, harness, and reporting.
   Details in `scanner/README.md`.
 - **`docs/`** — the two design decisions I made before writing any code
-  (vector DB choice, and MCP vs. raw function-calling for the tool layer), plus
-  the OWASP LLM Top 10 mapping for each check module.
+  (vector DB choice, and MCP vs. raw function-calling for the tool layer), the
+  OWASP LLM Top 10 mapping for each check module, and a findings summary from
+  the first full test run.
 
 ## Status
 
-Phase 0 — scoping and repo setup. No application code yet. The target app comes
-next (Phase 1), followed by the scanner's first check module (Phase 2).
+Both components are built and working: a real RAG + tool-calling target app,
+and a scanner with an authorization-gated CLI, JSON/HTML reporting, and a
+pytest suite. Check module 1 (indirect prompt injection) has been run against
+the target across two rounds of escalating technique — see
+`docs/FINDINGS-SUMMARY.md` for the full methodology and result.
+
+The tool-calling hijack, data exfiltration, and jailbreak-persistence checks
+are the next planned extensions.
 
 ## What this does *not* try to do
 
