@@ -27,6 +27,7 @@ async def call_mcp_tool(tool_name: str, arguments: dict):
         command=sys.executable,
         args=["-m", "app.mcp_server"],
         cwd=PROJECT_ROOT,
+        env=os.environ.copy(),
     )
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
