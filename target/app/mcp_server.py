@@ -1,3 +1,5 @@
+import os, sys
+print(f"[mcp_server] GEMINI_API_KEY present: {bool(os.environ.get('GEMINI_API_KEY'))}", file=sys.stderr)
 from mcp.server.fastmcp import FastMCP
 
 from app.tools import get_document_metadata, list_documents, search_documents
