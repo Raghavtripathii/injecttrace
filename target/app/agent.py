@@ -10,6 +10,11 @@ from mcp.client.stdio import stdio_client
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
+if not GEMINI_API_KEY:
+    raise RuntimeError(
+        "GEMINI_API_KEY is not set. Copy .env.example to .env and fill it in."
+    )
+
 genai.configure(api_key=GEMINI_API_KEY)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
