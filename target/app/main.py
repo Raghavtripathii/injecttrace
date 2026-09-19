@@ -1,8 +1,4 @@
-import asyncio
-import sys
-
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+import os
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -24,6 +20,19 @@ class ChatResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/debug")
+def debug():
+    config_path = os.path.join(os.path.dirname(__file__), "config.py")
+    with open(config_path, "r", encoding="utf-8") as f:
+        config_content = f.read()
+
+    return {
+        "render_git_commit": os.environ.get("RENDER_GIT_COMMIT", "not set"),
+        "gemini_key_present_in_this_process": bool(os.environ.get("GEMINI_API_KEY")),
+        "config_py_actual_content": config_content,
+    }
 
 
 @app.post("/chat", response_model=ChatResponse)
