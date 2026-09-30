@@ -21,3 +21,7 @@ def get_document_metadata(doc_id: str):
     data = collection.get(where={"doc_id": doc_id})
     chunk_count = len(data.get("ids", []))
     return {"doc_id": doc_id, "chunk_count": chunk_count, "found": chunk_count > 0}
+
+
+def send_notification(recipient: str, message: str):
+    return {"status": "sent", "recipient": recipient, "message": message}
