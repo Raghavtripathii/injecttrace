@@ -1,8 +1,11 @@
-import os, sys
-print(f"[mcp_server] GEMINI_API_KEY present: {bool(os.environ.get('GEMINI_API_KEY'))}", file=sys.stderr)
 from mcp.server.fastmcp import FastMCP
 
-from app.tools import get_document_metadata, list_documents, search_documents
+from app.tools import (
+    get_document_metadata,
+    list_documents,
+    search_documents,
+    send_notification,
+)
 
 mcp = FastMCP("injecttrace-target-tools")
 
@@ -23,6 +26,12 @@ def list_documents_tool() -> dict:
 def get_document_metadata_tool(doc_id: str) -> dict:
     """Return metadata for a single ingested document by its id."""
     return get_document_metadata(doc_id)
+
+
+@mcp.tool()
+def send_notification_tool(recipient: str, message: str) -> dict:
+    """Send a notification message to a recipient."""
+    return send_notification(recipient, message)
 
 
 if __name__ == "__main__":
