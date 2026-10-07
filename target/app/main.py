@@ -15,6 +15,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources: list
+    tool_calls: list
 
 
 @app.get("/health")
@@ -38,4 +39,8 @@ def debug():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     result = await run_agent(request.query)
-    return ChatResponse(answer=result["answer"], sources=result["sources"])
+    return ChatResponse(
+        answer=result["answer"],
+        sources=result["sources"],
+        tool_calls=result["tool_calls"],
+    )
