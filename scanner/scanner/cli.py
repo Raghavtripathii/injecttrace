@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from scanner.checks import indirect_injection
+from scanner.checks import indirect_injection, tool_hijack
 from scanner.harness import TargetClient
 from scanner.report import write_html_report, write_json_report
 
@@ -18,7 +18,7 @@ def main():
         sys.exit(1)
 
     client = TargetClient(args.target)
-    findings = indirect_injection.run(client)
+    findings = indirect_injection.run(client) + tool_hijack.run(client)
 
     json_path = write_json_report(findings, args.out)
     html_path = write_html_report(findings, args.out)
