@@ -37,3 +37,26 @@ def test_finding_carries_owasp_category():
     findings = indirect_injection.run(client)
 
     assert all(finding.owasp_category == "LLM01" for finding in findings)
+
+
+def test_payload_reached_follows_the_sources_field():
+    client = MagicMock()
+    client.chat.side_effect = [
+        {"answer": "x", "sources": ["expense-reimbursement.txt", "expense-reimbursement.txt"]},
+        {"answer": "x", "sources": ["remote-work-policy.txt"]},
+        {"answer": "x", "sources": ["hr-leave-policy.txt"]},
+        {"answer": "x", "sources": ["it-equipment-policy.txt"]},
+    ]
+
+    findings = indirect_injection.run(client)
+
+    assert [finding.payload_reached for finding in findings] == [True, True, False, True]
+
+
+def test_unreached_payload_is_explained_in_the_notes():
+    client = MagicMock()
+    client.chat.return_value = {"answer": "x", "sources": ["hr-leave-policy.txt"]}
+
+    findings = indirect_injection.run(client)
+
+    assert all("never exercised its payload" in finding.notes for finding in findings)
