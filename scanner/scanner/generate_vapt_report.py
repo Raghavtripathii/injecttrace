@@ -19,45 +19,69 @@ def _load_findings(path: str) -> list[dict]:
         return json.load(f)
 
 
+def _status(finding: dict) -> str:
+    if finding["vulnerable"]:
+        return "VULNERABLE"
+    if finding.get("payload_reached") is False:
+        return "INCONCLUSIVE"
+    return "NOT REPRODUCED"
+
+
+def _retrieval_label(finding: dict) -> str:
+    reached = finding.get("payload_reached")
+    if reached is None:
+        return "not applicable"
+    return "yes" if reached else "no"
+
+
 def _render_markdown(findings: list[dict], source_path: str) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    vulnerable = [f for f in findings if f["vulnerable"]]
-    clean = [f for f in findings if not f["vulnerable"]]
+    statuses = [_status(f) for f in findings]
+    vulnerable = statuses.count("VULNERABLE")
+    inconclusive = statuses.count("INCONCLUSIVE")
+    not_reproduced = statuses.count("NOT REPRODUCED")
 
     lines = []
-    lines.append("# InjectTrace — Findings Report")
+    lines.append("# InjectTrace - Findings Report")
     lines.append("")
     lines.append(f"Generated: {generated_at}")
     lines.append(f"Source run: `{os.path.basename(source_path)}`")
     lines.append("")
     lines.append("This report is generated directly from a saved scanner run. Every row below")
-    lines.append("reflects an actual probe sent to the target and the actual response received —")
-    lines.append("nothing in this file is hand-authored or estimated.")
+    lines.append("reflects an actual probe sent to the target and the actual response received.")
+    lines.append("Nothing in this file is hand-authored or estimated.")
     lines.append("")
     lines.append("## Summary")
     lines.append("")
     lines.append(f"- Probes run: {len(findings)}")
-    lines.append(f"- Vulnerable: {len(vulnerable)}")
-    lines.append(f"- Clean: {len(clean)}")
+    lines.append(f"- Vulnerable: {vulnerable}")
+    lines.append(f"- Not reproduced: {not_reproduced}")
+    lines.append(f"- Inconclusive: {inconclusive}")
     lines.append("")
 
     if not vulnerable:
         lines.append("**No vulnerability was reproduced in this run.** This is reported as-is,")
-        lines.append("not omitted — an honest negative result is still a result. See the per-probe")
-        lines.append("detail below for what was actually tested and returned.")
+        lines.append("not omitted. See the per-probe detail below for what was actually tested")
+        lines.append("and returned.")
+        lines.append("")
+
+    if inconclusive:
+        lines.append(f"{inconclusive} probe(s) are inconclusive: the document carrying the payload")
+        lines.append("was not among the sources the target retrieved, so the probe could not")
+        lines.append("exercise it. These are not counted as clean.")
         lines.append("")
 
     lines.append("## Findings")
     lines.append("")
 
-    sorted_findings = sorted(findings, key=lambda f: SEVERITY_ORDER.get(f["severity"], 99))
+    ordered = sorted(findings, key=lambda f: SEVERITY_ORDER.get(f["severity"], 99))
 
-    for i, finding in enumerate(sorted_findings, start=1):
-        status = "VULNERABLE" if finding["vulnerable"] else "NOT REPRODUCED"
-        lines.append(f"### {i}. {finding['check_id']} — {status}")
+    for i, finding in enumerate(ordered, start=1):
+        lines.append(f"### {i}. {finding['check_id']} - {_status(finding)}")
         lines.append("")
         lines.append(f"- **OWASP category:** {finding['owasp_category']}")
         lines.append(f"- **Severity:** {finding['severity']}")
+        lines.append(f"- **Payload document retrieved:** {_retrieval_label(finding)}")
         lines.append(f"- **Probe query:** `{finding['query']}`")
         lines.append("")
         lines.append("**Target response (verbatim):**")
@@ -67,7 +91,7 @@ def _render_markdown(findings: list[dict], source_path: str) -> str:
         lines.append("```")
         lines.append("")
         if finding["vulnerable"]:
-            lines.append(f"**Evidence (canary matched):** `{finding['evidence']}`")
+            lines.append(f"**Evidence:** `{finding['evidence']}`")
         elif finding.get("notes"):
             lines.append(f"**Note:** {finding['notes']}")
         lines.append("")
@@ -90,7 +114,7 @@ def _render_markdown(findings: list[dict], source_path: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate a VAPT-style markdown report from a scanner JSON run")
+    parser = argparse.ArgumentParser(description="Generate a markdown findings report from a scanner JSON run")
     parser.add_argument("--reports-dir", default="reports", help="Directory containing report-*.json files")
     parser.add_argument("--json", default=None, help="Specific JSON report to use (default: latest in reports-dir)")
     parser.add_argument("--out", default=None, help="Output markdown path (default: alongside the JSON file)")
