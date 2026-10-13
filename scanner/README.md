@@ -37,13 +37,25 @@ python -m scanner.cli --target http://127.0.0.1:8000 --i-am-authorized
 python -m scanner.generate_vapt_report
 ```
 
-Reports land in `reports/` as timestamped files.
+Reports land in `reports/` as timestamped files. The CLI waits 13 seconds between
+probes by default (`--delay`) to stay under a free-tier model rate limit.
 
 ## Running the tests
 
 ```bash
 pytest
 ```
+
+## Reading a result
+
+Each probe ends in one of three states. **VULNERABLE**: the planted value was
+recovered. **NOT REPRODUCED**: the planted value did not appear and, where it
+applies, the document carrying the payload was among the sources the target
+retrieved. **INCONCLUSIVE**: that document was not retrieved, so the probe never
+exercised its payload; these are not counted as clean. Retrieval is judged per
+document, not per chunk, so a retrieved document does not prove the exact chunk
+with the payload reached the model. System prompt probes have no document, so
+retrieval does not apply to them.
 
 ## What each module does NOT catch
 
