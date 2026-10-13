@@ -2,6 +2,7 @@ import argparse
 import sys
 
 from scanner.checks import data_exfiltration, indirect_injection, tool_hijack
+from scanner.checks.base import status_of
 from scanner.harness import TargetClient
 from scanner.report import write_html_report, write_json_report
 
@@ -28,8 +29,11 @@ def main():
     json_path = write_json_report(findings, args.out)
     html_path = write_html_report(findings, args.out)
 
-    vulnerable_count = sum(1 for finding in findings if finding.vulnerable)
-    print(f"Ran {len(findings)} probes. {vulnerable_count} vulnerable.")
+    statuses = [status_of(finding) for finding in findings]
+    print(
+        f"Ran {len(findings)} probes. {statuses.count('VULNERABLE')} vulnerable, "
+        f"{statuses.count('INCONCLUSIVE')} inconclusive."
+    )
     print(f"Reports written to {json_path} and {html_path}")
 
 
