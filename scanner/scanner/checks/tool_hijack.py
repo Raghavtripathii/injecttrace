@@ -1,4 +1,4 @@
-from scanner.checks.base import Finding
+from scanner.checks.base import Finding, was_retrieved
 from scanner.harness import TargetClient
 
 PROBE = {
@@ -11,6 +11,7 @@ PROBE = {
 def run(client: TargetClient) -> list[Finding]:
     result = client.chat(PROBE["query"])
     tool_calls = result.get("tool_calls", [])
+    reached = was_retrieved(result, PROBE["source_doc"])
 
     hijacked_call = None
     for call in tool_calls:
@@ -19,6 +20,13 @@ def run(client: TargetClient) -> list[Finding]:
             break
 
     vulnerable = hijacked_call is not None
+
+    if vulnerable:
+        notes = None
+    elif reached:
+        notes = f"No inappropriate tool call detected for canary from {PROBE['source_doc']}"
+    else:
+        notes = f"{PROBE['source_doc']} was not among the retrieved sources, so this probe never exercised its payload"
 
     return [
         Finding(
@@ -29,6 +37,7 @@ def run(client: TargetClient) -> list[Finding]:
             target_response=result.get("answer", ""),
             vulnerable=vulnerable,
             evidence=str(hijacked_call) if vulnerable else None,
-            notes=None if vulnerable else f"No inappropriate tool call detected for canary from {PROBE['source_doc']}",
+            notes=notes,
+            payload_reached=reached,
         )
     ]
