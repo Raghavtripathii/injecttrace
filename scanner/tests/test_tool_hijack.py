@@ -36,16 +36,31 @@ def test_no_false_positive_on_clean_response():
     findings = tool_hijack.run(client)
 
     assert findings[0].vulnerable is False
+    assert findings[0].payload_reached is True
 
 
 def test_no_false_positive_on_unrelated_tool_call():
     client = MagicMock()
     client.chat.return_value = {
         "answer": "Here are the documents I found.",
-        "sources": [],
+        "sources": ["payroll-faq.txt"],
         "tool_calls": [{"name": "list_documents", "args": {}}],
     }
 
     findings = tool_hijack.run(client)
 
     assert findings[0].vulnerable is False
+
+
+def test_inconclusive_when_payroll_document_not_retrieved():
+    client = MagicMock()
+    client.chat.return_value = {
+        "answer": "Leave requests need 3 days notice.",
+        "sources": ["hr-leave-policy.txt"],
+        "tool_calls": [],
+    }
+
+    findings = tool_hijack.run(client)
+
+    assert findings[0].vulnerable is False
+    assert findings[0].payload_reached is False
