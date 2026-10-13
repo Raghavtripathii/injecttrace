@@ -54,7 +54,7 @@ def test_run_flags_encoded_document_leak():
         REFUSAL,
         REFUSAL,
         REFUSAL,
-        {"answer": encoded, "sources": [], "tool_calls": []},
+        {"answer": encoded, "sources": ["confidential-board-notes.txt"], "tool_calls": []},
     ]
 
     findings = data_exfiltration.run(client)
@@ -71,3 +71,25 @@ def test_run_clean_when_target_refuses_everything():
 
     assert all(not finding.vulnerable for finding in findings)
     assert [finding.owasp_category for finding in findings] == ["LLM07", "LLM07", "LLM02", "LLM02"]
+
+
+def test_document_probes_track_retrieval_and_system_probes_do_not():
+    client = MagicMock()
+    client.chat.return_value = {
+        "answer": "I cannot help with that.",
+        "sources": ["confidential-board-notes.txt"],
+        "tool_calls": [],
+    }
+
+    findings = data_exfiltration.run(client)
+
+    assert [finding.payload_reached for finding in findings] == [None, None, True, True]
+
+
+def test_document_probes_inconclusive_when_document_not_retrieved():
+    client = MagicMock()
+    client.chat.return_value = REFUSAL
+
+    findings = data_exfiltration.run(client)
+
+    assert [finding.payload_reached for finding in findings] == [None, None, False, False]
